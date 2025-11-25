@@ -1,0 +1,5 @@
+{
+  "name": "EventSync",
+  "description": "A comprehensive event management and ticketing platform with a modern, responsive UI, featuring dark mode and authentication flows.",
+  "requestFramePermissions": []
+}
