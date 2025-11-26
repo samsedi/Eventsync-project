@@ -4,6 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EventSync - Event Management Platform</title>
+    <script>
+      // CRITICAL FIX: Polyfill process.env to prevent "ReferenceError: process is not defined" 
+      // which causes blank screens when running this app in a local browser without a bundler.
+      if (typeof window !== 'undefined' && typeof window.process === 'undefined') {
+        window.process = { env: { NODE_ENV: 'development' } };
+      }
+
+      // Error trap to show startup crashes on the screen
+      window.addEventListener('error', function(e) {
+        // Only show if the root is empty (meaning the app failed to mount)
+        const root = document.getElementById('root');
+        if (root && !root.hasChildNodes()) {
+           const msg = document.createElement('div');
+           msg.style.padding = '2rem';
+           msg.style.color = '#ef4444';
+           msg.style.fontFamily = 'system-ui, sans-serif';
+           msg.innerHTML = `
+             <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem">Application Failed to Start</h2>
+             <p>A runtime error occurred before React could mount:</p>
+             <pre style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; overflow: auto">${e.message}</pre>
+             <p style="margin-top: 1rem; color: #666">Check the browser console for full stack trace.</p>
+           `;
+           document.body.prepend(msg);
+        }
+      });
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {

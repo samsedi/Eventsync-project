@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { Calendar, MapPin, Ticket as TicketIcon, Clock, CheckCircle, Smartphone } from 'lucide-react';
 
-const Ticket3D = ({ ticket, event }: { ticket: any, event: any }) => {
+const Ticket3D: React.FC<{ ticket: any, event: any }> = ({ ticket, event }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [rotate, setRotate] = useState({ x: 0, y: 0 });
   const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 });

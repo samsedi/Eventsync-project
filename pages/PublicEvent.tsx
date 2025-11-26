@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Sparkles, Calendar, MapPin, Clock, Share2, ArrowLeft, Check, CreditCard, Lock, User, Mail } from 'lucide-react';
+import { Sparkles, Calendar, MapPin, Clock, ArrowLeft, Check, CreditCard, Lock, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useData } from '../context/DataContext';
@@ -26,7 +26,7 @@ export const PublicEvent: React.FC = () => {
   }, [id, events]);
 
   // Derived tickets based on event (Mock data structure enhancement)
-  const ticketTypes = [
+  const ticketTypes: { id: string; name: string; price: number; description: string }[] = [
       { id: 'gen', name: 'General Admission', price: 50, description: 'Access to main areas.' },
       { id: 'vip', name: 'VIP Access', price: 150, description: 'Priority seating & VIP lounge.' },
   ];
@@ -43,7 +43,7 @@ export const PublicEvent: React.FC = () => {
     return sum + (ticket.price * (selectedTickets[ticket.id] || 0));
   }, 0);
 
-  const totalItems = Object.values(selectedTickets).reduce((a, b) => a + b, 0);
+  const totalItems = (Object.values(selectedTickets) as number[]).reduce((a, b) => a + b, 0);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +52,7 @@ export const PublicEvent: React.FC = () => {
 
     try {
         // Create tickets for each type selected
-        for (const [typeId, qty] of Object.entries(selectedTickets)) {
+        for (const [typeId, qty] of Object.entries(selectedTickets) as [string, number][]) {
             const typeDef = ticketTypes.find(t => t.id === typeId);
             if (!typeDef) continue;
 
@@ -71,6 +71,7 @@ export const PublicEvent: React.FC = () => {
         }
         
         setIsSuccess(true);
+        setIsCheckoutOpen(false);
     } catch (error) {
         console.error("Purchase failed", error);
     } finally {
@@ -247,60 +248,45 @@ export const PublicEvent: React.FC = () => {
               <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
                   <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white">Checkout</h3>
-                      <button onClick={() => setIsCheckoutOpen(false)} className="text-gray-400 hover:text-gray-600">×</button>
+                      <button onClick={() => setIsCheckoutOpen(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                          <X className="h-6 w-6" />
+                      </button>
                   </div>
                   
                   <div className="p-6 overflow-y-auto">
-                      <form id="checkout-form" onSubmit={handleCheckout} className="space-y-6">
-                          <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg mb-6">
-                              <div className="flex justify-between text-sm mb-2">
-                                  <span className="text-gray-500">Event</span>
-                                  <span className="font-medium text-gray-900 dark:text-white truncate max-w-[200px]">{event.title}</span>
-                              </div>
-                              <div className="flex justify-between text-sm mb-2">
-                                  <span className="text-gray-500">Tickets</span>
-                                  <span className="font-medium text-gray-900 dark:text-white">{totalItems}x</span>
-                              </div>
-                              <div className="flex justify-between text-lg font-bold border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
-                                  <span className="text-gray-900 dark:text-white">Total</span>
-                                  <span className="text-primary-600">${totalAmount}</span>
-                              </div>
-                          </div>
+                    <div className="space-y-4 mb-6">
+                        {Object.entries(selectedTickets).map(([id, qty]) => {
+                            const ticket = ticketTypes.find(t => t.id === id);
+                            if (!ticket || qty === 0) return null;
+                            return (
+                                <div key={id} className="flex justify-between text-gray-700 dark:text-gray-300">
+                                    <span>{qty}x {ticket.name}</span>
+                                    <span className="font-medium">${ticket.price * qty}</span>
+                                </div>
+                            );
+                        })}
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between font-bold text-gray-900 dark:text-white text-lg">
+                            <span>Total</span>
+                            <span>${totalAmount}</span>
+                        </div>
+                    </div>
 
-                          <div className="space-y-4">
-                              <h4 className="font-medium text-gray-900 dark:text-white flex items-center">
-                                  <User className="h-4 w-4 mr-2" /> Contact Information
-                              </h4>
-                              <div className="grid grid-cols-2 gap-4">
-                                  <input type="text" required placeholder="First Name" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:text-white focus:ring-primary-500 focus:outline-none" defaultValue={currentUser?.displayName?.split(' ')[0]} />
-                                  <input type="text" required placeholder="Last Name" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:text-white focus:ring-primary-500 focus:outline-none" />
-                              </div>
-                              <input type="email" required placeholder="Email Address" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:text-white focus:ring-primary-500 focus:outline-none" defaultValue={currentUser?.email || ''} />
-                          </div>
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6 border border-gray-200 dark:border-gray-600">
+                        <div className="flex items-center mb-4">
+                            <CreditCard className="h-5 w-5 mr-2 text-primary-600" />
+                            <span className="font-medium text-gray-900 dark:text-white">Payment Details</span>
+                        </div>
+                        <input type="text" placeholder="Card Number (Mock)" defaultValue="4242 4242 4242 4242" className="w-full mb-3 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" disabled />
+                        <div className="grid grid-cols-2 gap-4">
+                            <input type="text" placeholder="MM/YY" defaultValue="12/26" className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" disabled />
+                            <input type="text" placeholder="CVC" defaultValue="123" className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" disabled />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 flex items-center"><Lock className="h-3 w-3 mr-1" /> Secure (Mock) Transaction</p>
+                    </div>
 
-                          <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                               <h4 className="font-medium text-gray-900 dark:text-white flex items-center">
-                                  <CreditCard className="h-4 w-4 mr-2" /> Payment Details
-                              </h4>
-                              <div className="relative">
-                                  <input type="text" required placeholder="Card Number" className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:text-white focus:ring-primary-500 focus:outline-none" />
-                                  <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                  <input type="text" required placeholder="MM/YY" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:text-white focus:ring-primary-500 focus:outline-none" />
-                                  <input type="text" required placeholder="CVC" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:text-white focus:ring-primary-500 focus:outline-none" />
-                              </div>
-                          </div>
-                      </form>
-                  </div>
-
-                  <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-2xl">
-                      <Button form="checkout-form" type="submit" className="w-full" isLoading={loading}>
-                          Pay ${totalAmount}
-                      </Button>
-                      <p className="text-xs text-center text-gray-500 mt-3 flex items-center justify-center">
-                          <Lock className="h-3 w-3 mr-1" /> Secure Payment Processing
-                      </p>
+                    <Button className="w-full py-3 text-lg" onClick={handleCheckout} isLoading={loading}>
+                        Pay ${totalAmount}
+                    </Button>
                   </div>
               </div>
           </div>
